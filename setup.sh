@@ -1,20 +1,31 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 echo "======================================"
-echo " Installing Python packages"
+echo " NewSQL Web Lab - SETUP"
 echo "======================================"
+
+CRDB_VERSION="v26.2.5"
+INSTALL_ROOT="$HOME/.local/cockroach"
+
+# ----------------------------------------------------------
+# 1. Install Python packages
+# ----------------------------------------------------------
+
+echo
+echo "[1/3] Installing Python packages..."
 
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
 
-echo "======================================"
-echo " Installing CockroachDB"
-echo "======================================"
+# ----------------------------------------------------------
+# 2. Detect CPU architecture
+# ----------------------------------------------------------
 
-CRDB_VERSION="v26.2.5"
+echo
+echo "[2/3] Detecting system architecture..."
 
 ARCH="$(uname -m)"
 
@@ -29,34 +40,71 @@ case "$ARCH" in
         ;;
 
     *)
-        echo "Unsupported architecture: $ARCH"
+        echo "ERROR: Unsupported architecture: $ARCH"
         exit 1
         ;;
 
 esac
 
+echo "Architecture: $CRDB_ARCH"
+
+
+# ----------------------------------------------------------
+# 3. Download CockroachDB
+# ----------------------------------------------------------
+
+echo
+echo "[3/3] Installing CockroachDB ${CRDB_VERSION}..."
 
 PACKAGE="cockroach-${CRDB_VERSION}.linux-${CRDB_ARCH}"
 
-INSTALL_DIR="$HOME/.local/cockroach"
+COCKROACH_DIR="${INSTALL_ROOT}/${PACKAGE}"
 
-mkdir -p "$INSTALL_DIR"
+COCKROACH_BIN="${COCKROACH_DIR}/cockroach"
+
+DOWNLOAD_URL="https://binaries.cockroachdb.com/${PACKAGE}.tgz"
 
 
-if [ ! -f "$INSTALL_DIR/$PACKAGE/cockroach" ]; then
+mkdir -p "$INSTALL_ROOT"
 
-    curl -fsSL \
-      "https://binaries.cockroachdb.com/${PACKAGE}.tgz" \
-      -o /tmp/cockroach.tgz
+
+if [ -x "$COCKROACH_BIN" ]; then
+
+    echo "CockroachDB is already installed."
+
+else
+
+    echo "Downloading:"
+    echo "$DOWNLOAD_URL"
+
+    curl -fL \
+        "$DOWNLOAD_URL" \
+        -o /tmp/cockroach.tgz
 
     tar -xzf \
-      /tmp/cockroach.tgz \
-      -C "$INSTALL_DIR"
+        /tmp/cockroach.tgz \
+        -C "$INSTALL_ROOT"
+
+    rm -f /tmp/cockroach.tgz
 
 fi
 
 
-"$INSTALL_DIR/$PACKAGE/cockroach" version
+echo
+echo "======================================"
+echo " CockroachDB Version"
+echo "======================================"
+
+"$COCKROACH_BIN" version
+
 
 echo
-echo "CockroachDB installed successfully."
+echo "======================================"
+echo " SETUP COMPLETED SUCCESSFULLY"
+echo "======================================"
+
+echo
+echo "Next command:"
+echo
+echo "bash start.sh"
+echo
