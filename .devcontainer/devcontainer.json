@@ -1,0 +1,24 @@
+{
+  "name": "NewSQL Web Lab",
+
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+
+  "forwardPorts": [
+    8501,
+    8080
+  ],
+
+  "portsAttributes": {
+    "8501": {
+      "label": "Streamlit App",
+      "onAutoForward": "openBrowser"
+    },
+
+    "8080": {
+      "label": "CockroachDB Console",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "postCreateCommand": "bash setup.sh"
+}
